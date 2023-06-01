@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model academy {
+  id      String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name    String   @db.VarChar
+  user_id String?  @db.Uuid
+  user    user?    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  coach   coach[]
+  player  player[]
+}
+
+model coach {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id           String?             @db.Uuid
+  academy_id        String?             @db.Uuid
+  first_name        String              @db.VarChar
+  last_name         String              @db.VarChar
+  academy           academy?            @relation(fields: [academy_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user              user?               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  training_exercise training_exercise[]
+}
+
+model communication {
+  id                                   String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sender_id                            String?  @db.Uuid
+  receiver_id                          String?  @db.Uuid
+  message                              String   @db.VarChar
+  date_sent                            DateTime @db.Timestamp(6)
+  user_communication_receiver_idTouser user?    @relation("communication_receiver_idTouser", fields: [receiver_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_communication_sender_idTouser   user?    @relation("communication_sender_idTouser", fields: [sender_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model development_goal {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  player_id   String?  @db.Uuid
+  description String   @db.VarChar
+  start_date  DateTime @db.Date
+  end_date    DateTime @db.Date
+  player      player?  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model parent {
+  id         String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String? @db.Uuid
+  first_name String  @db.VarChar
+  last_name  String  @db.VarChar
+  user       user?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model performance_data {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  player_id String?  @db.Uuid
+  data_type String   @db.VarChar
+  value     Int
+  date      DateTime @db.Date
+  player    player?  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model player {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id           String?             @db.Uuid
+  academy_id        String?             @db.Uuid
+  first_name        String              @db.VarChar
+  last_name         String              @db.VarChar
+  date_of_birth     DateTime            @db.Date
+  position          String              @db.VarChar
+  development_goal  development_goal[]
+  performance_data  performance_data[]
+  academy           academy?            @relation(fields: [academy_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user              user?               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  training_exercise training_exercise[]
+}
+
+model training_exercise {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  coach_id      String?  @db.Uuid
+  player_id     String?  @db.Uuid
+  description   String   @db.VarChar
+  date_assigned DateTime @db.Date
+  date_due      DateTime @db.Date
+  status        String   @db.VarChar
+  coach         coach?   @relation(fields: [coach_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  player        player?  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                                            String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  roq_user_id                                   String          @db.VarChar(255)
+  tenant_id                                     String          @db.VarChar(255)
+  firstName                                     String?         @db.VarChar(255)
+  lastName                                      String?         @db.VarChar(255)
+  email                                         String?         @db.VarChar(255)
+  academy                                       academy[]
+  coach                                         coach[]
+  communication_communication_receiver_idTouser communication[] @relation("communication_receiver_idTouser")
+  communication_communication_sender_idTouser   communication[] @relation("communication_sender_idTouser")
+  parent                                        parent[]
+  player                                        player[]
+}
